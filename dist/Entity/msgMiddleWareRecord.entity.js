@@ -13,17 +13,18 @@ const typeorm_1 = require("typeorm");
 let MsgMiddleWareRecord = class MsgMiddleWareRecord {
 };
 __decorate([
-    typeorm_1.PrimaryColumn(),
+    typeorm_1.PrimaryGeneratedColumn(),
+    __metadata("design:type", Number)
+], MsgMiddleWareRecord.prototype, "id", void 0);
+__decorate([
+    typeorm_1.Column(),
+    typeorm_1.Index(),
     __metadata("design:type", String)
 ], MsgMiddleWareRecord.prototype, "msg_id", void 0);
 __decorate([
     typeorm_1.Column(),
     __metadata("design:type", String)
-], MsgMiddleWareRecord.prototype, "recall_url", void 0);
-__decorate([
-    typeorm_1.Column(),
-    __metadata("design:type", String)
-], MsgMiddleWareRecord.prototype, "data", void 0);
+], MsgMiddleWareRecord.prototype, "moduleName", void 0);
 MsgMiddleWareRecord = __decorate([
     typeorm_1.Entity()
 ], MsgMiddleWareRecord);

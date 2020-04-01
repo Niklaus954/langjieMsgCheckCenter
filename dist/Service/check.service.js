@@ -27,9 +27,15 @@ let CheckService = class CheckService {
     }
     async check(msg) {
         const payload = JSON.parse(msg);
-        const { msg_id, recall_url, exchangeName, exchangeType } = payload;
-        const recordEntity = await this.recordRepo.findOne({ where: { msg_id } });
-        if (recordEntity) {
+        const { msg_id, recall_url, exchangeName, exchangeType, data } = payload;
+        let isComplete = true;
+        for (const moduleName of Object.keys(data)) {
+            const recordEntity = await this.recordRepo.findOne({ where: { msg_id, moduleName } });
+            if (!recordEntity) {
+                isComplete = false;
+            }
+        }
+        if (isComplete) {
             return true;
         }
         const failLogEntity = await this.failLogRepo.findOne({ where: { msg_id } });
@@ -38,15 +44,15 @@ let CheckService = class CheckService {
         }
         else {
             let { count } = failLogEntity;
+            count++;
             if (count < 4) {
-                count++;
                 await this.failLogRepo.update({ msg_id }, { count });
             }
             else {
                 return this.downServerFail(payload);
             }
         }
-        const producerMq = new dist_1.ProducerMq({ exchangeName, exchangeType });
+        const producerMq = new dist_1.ProducerMq({ exchangeName, exchangeType, expiration: 5000 });
         producerMq.delayPublish(msg);
         producerMq.publish(msg);
         return true;

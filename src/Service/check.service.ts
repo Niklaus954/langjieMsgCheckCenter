@@ -18,9 +18,15 @@ export class CheckService {
 
     async check(msg: string) {
         const payload = JSON.parse(msg);
-        const { msg_id, recall_url, exchangeName, exchangeType } = payload;
-        const recordEntity = await this.recordRepo.findOne({ where: { msg_id }});
-        if (recordEntity) {
+        const { msg_id, recall_url, exchangeName, exchangeType, data } = payload;
+        let isComplete: boolean = true;
+        for (const moduleName of Object.keys(data)) {
+            const recordEntity = await this.recordRepo.findOne({ where: { msg_id, moduleName }});
+            if (!recordEntity) {
+                isComplete = false;
+            }
+        }
+        if (isComplete) {
             return true;
         }
         // 记下当前重发次数，重发超过一定次数后，报警
@@ -29,8 +35,8 @@ export class CheckService {
             await this.failLogRepo.insert({ msg_id, count: 1});
         } else {
             let { count } = failLogEntity;
+            count++;
             if (count < 4) {
-                count++;
                 await this.failLogRepo.update({ msg_id }, { count });
             } else {
                 // 报警
@@ -38,7 +44,7 @@ export class CheckService {
             }
         }
         // 自己代替上游重发一次消息
-        const producerMq = new ProducerMq({ exchangeName, exchangeType });
+        const producerMq = new ProducerMq({ exchangeName, exchangeType, expiration: 5000 });
         producerMq.delayPublish(msg);
         producerMq.publish(msg);
         return true;

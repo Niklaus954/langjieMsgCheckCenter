@@ -1,14 +1,15 @@
-import { Entity, Column, PrimaryColumn } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, Index } from "typeorm";
 
 @Entity()
 export class MsgMiddleWareRecord {
 
-    @PrimaryColumn()
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    @Index()
     msg_id: string;
 
     @Column()
-    recall_url: string;
-
-    @Column()
-    data: string;
+    moduleName: string;
 }

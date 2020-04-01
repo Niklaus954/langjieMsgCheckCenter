@@ -1,5 +1,5 @@
 export declare class MsgMiddleWareRecord {
+    id: number;
     msg_id: string;
-    recall_url: string;
-    data: string;
+    moduleName: string;
 }

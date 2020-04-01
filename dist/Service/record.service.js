@@ -16,21 +16,32 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const msgMiddleWareRecord_entity_1 = require("../Entity/msgMiddleWareRecord.entity");
+const log_util_1 = require("../Util/log.util");
 let RecordService = class RecordService {
     constructor(recordRepo) {
         this.recordRepo = recordRepo;
     }
     async record(msg) {
         const payload = JSON.parse(msg);
-        const { msg_id, recall_url, data } = payload;
+        const { msg_id, moduleName } = payload;
+        const connection = typeorm_2.getConnection();
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
         try {
-            await this.recordRepo.insert({
+            const result = await queryRunner.manager.query(`SELECT id FROM msg_middle_ware_record WHERE msg_id = "${msg_id}" AND moduleName = "${moduleName}" FOR UPDATE`);
+            if (result.length !== 0) {
+                throw new Error('已存在');
+            }
+            await queryRunner.manager.insert(msgMiddleWareRecord_entity_1.MsgMiddleWareRecord, {
                 msg_id,
-                recall_url,
-                data: JSON.stringify(data),
+                moduleName,
             });
+            await queryRunner.commitTransaction();
         }
         catch (e) {
+            log_util_1.logger.error(e);
+            await queryRunner.rollbackTransaction();
         }
     }
 };
